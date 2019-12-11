@@ -23,24 +23,24 @@ def calculate_line(point_a, point_b):
     if point_a[1] == point_b[1]:
         slope = 'horizontal'
         if point_a[0] > point_b[0]:
-            slope += '>'
+            char = '>'
         else:
-            slope += '<'
+            char = '<'
     elif point_a[0] == point_b[0]:
         slope = 'vertical'
         if point_a[1] > point_b[1]:
-            slope += '^'
+            char = '^'
         else:
-            slope += 'v'
+            char = 'v'
     else:
         slope = (point_a[1] - point_b[1]) / (point_a[0] - point_b[0])
 
         if point_a[0] > point_b[0]:
-            slope = str(slope) + '>'
+            char = '>'
         else:
-            slope = str(slope) + '<'
+            char = '<'
 
-    return slope
+    return [slope, char]
 
 
 def puzzle1(asteroids):
@@ -69,10 +69,80 @@ def puzzle1(asteroids):
 
 
 def puzzle2(station, slopes):
-    slopes.sort()
+    # Calculate distance per slope.
+    for slope in slopes:
+        distance = abs(station[0] - slope[1][0]) + abs(station[1] - slope[1][1])
+        slope.append(distance)
 
-    print(slopes[199])
-    return slopes[199][1][0] * 100 + slopes[199][1][1]
+    # Split into separate arrays.
+    vertical_up = []
+    vertical_down = []
+    horizontal_right = []
+    horizontal_left = []
+    positive_right = []
+    positive_left = []
+    negative_right = []
+    negative_left = []
+
+    for slope in slopes:
+        if slope[0][0] == 'vertical':
+            if slope[0][1] == '^':
+                vertical_up.append(slope)
+            elif slope[0][1] == 'v':
+                vertical_down.append(slope)
+        elif slope[0][0] == 'horizontal':
+            if slope[0][1] == '>':
+                horizontal_right.append(slope)
+            elif slope[0][1] == '<':
+                horizontal_left.append(slope)
+        elif slope[0][0] > 0:
+            if slope[0][1] == '>':
+                positive_right.append(slope)
+            elif slope[0][1] == '<':
+                positive_left.append(slope)
+        elif slope[0][0] < 0:
+            if slope[0][1] == '>':
+                negative_right.append(slope)
+            elif slope[0][1] == '<':
+                negative_left.append(slope)
+        else:
+            print(f'Error with slope {slope}')
+
+    # Sort all the arrays.
+    vertical_up.sort(key=lambda x: (x[0][0], x[2]))
+    vertical_down.sort(key=lambda x: (x[0][0], x[2]))
+    horizontal_right.sort(key=lambda x: (x[0][0], x[2]))
+    horizontal_left.sort(key=lambda x: (x[0][0], x[2]))
+    positive_right.sort(key=lambda x: (x[0][0], x[2]))
+    positive_left.sort(key=lambda x: (x[0][0], x[2]))
+    negative_right.sort(key=lambda x: (x[0][0], x[2]))
+    negative_left.sort(key=lambda x: (x[0][0], x[2]))
+
+    # Append them all back together.
+    sorted_slopes = []
+    sorted_slopes.extend(vertical_up)
+    sorted_slopes.extend(positive_right)
+    sorted_slopes.extend(horizontal_right)
+    sorted_slopes.extend(negative_right)
+    sorted_slopes.extend(vertical_down)
+    sorted_slopes.extend(positive_left)
+    sorted_slopes.extend(horizontal_left)
+    sorted_slopes.extend(negative_left)
+
+    # Loop over them all and destroy them one by one.
+    last_destroyed = [[[]]]
+    destroyed = 0
+    edited_slopes = sorted_slopes
+    while destroyed != 200:
+        for slope in sorted_slopes:
+            if last_destroyed[0][0] != slope[0][0]:
+                last_destroyed = slope
+                edited_slopes.remove(slope)
+                destroyed += 1
+                print(f'Destroyed {destroyed} - Slope {slope}')
+                if destroyed == 200:
+                    return slope[1][0] * 100 + slope[1][1]
+        sorted_slopes = edited_slopes
 
 
 if __name__ == '__main__':
